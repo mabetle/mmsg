@@ -3,11 +3,11 @@ package mmsg
 // modify from revel
 import (
 	"fmt"
+	"github.com/mabetle/mcore"
+	"github.com/mabetle/mcore/mconf/wrobfig"
 	"github.com/robfig/config"
 	"io"
 	"io/ioutil"
-	"github.com/github.com/mabetle/mcore"
-	"github.com/github.com/mabetle/mcore/mconf/wrobfig"
 	"os"
 	"path/filepath"
 	"regexp"

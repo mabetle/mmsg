@@ -2,8 +2,8 @@ package mmsg
 
 import (
 	"fmt"
-	"github.com/github.com/mabetle/mcore"
-	"github.com/github.com/mabetle/mcore/mmodel"
+	"github.com/mabetle/mcore"
+	"github.com/mabetle/mcore/mmodel"
 )
 
 type ModelLabel struct {
@@ -26,7 +26,7 @@ func GetModelLabels(locale string, model interface{}) (rows []ModelLabel) {
 
 // GetModelFieldLabel
 // returns model locale filed name message. Parameters:
-// locale 
+// locale
 // model can be a slice? no. do as name.
 // field
 // Field name save as column name.
@@ -34,22 +34,21 @@ func GetModelLabels(locale string, model interface{}) (rows []ModelLabel) {
 func GetModelFieldLabel(locale string, model interface{}, field string) string {
 	//table := mcore.GetTypeName(model)
 	table := mmodel.GetModelTableName(model)
-	column:= field		
-	return GetTableColumnLabel(locale,table,column)
+	column := field
+	return GetTableColumnLabel(locale, table, column)
 }
-
 
 // GetTableColumnLabel
 // returns table column locale label message.
 // if table is "", set table to common
 // key format: common-UserName etc.
-func GetTableColumnLabel(locale, table, column string) string{
-	
+func GetTableColumnLabel(locale, table, column string) string {
+
 	value := ""
-	
-	if table == ""{
-		table = "common"	
-	} 
+
+	if table == "" {
+		table = "common"
+	}
 
 	key := fmt.Sprintf("%s-%s-label", table, column)
 
