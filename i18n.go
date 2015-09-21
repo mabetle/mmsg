@@ -1,0 +1,236 @@
+package mmsg
+
+// modify from revel
+import (
+	"fmt"
+	"github.com/robfig/config"
+	"io"
+	"io/ioutil"
+	"github.com/github.com/mabetle/mcore"
+	"github.com/github.com/mabetle/mcore/mconf/wrobfig"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+)
+
+const (
+	messageFilePattern = `^\w+\.[a-zA-Z]{2}$`
+	unknownValueFormat = "[%s]"
+)
+
+var (
+	defaultLanguage = "en"
+	// All currently loaded message configs.
+	messages map[string]*config.Config = make(map[string]*config.Config)
+)
+
+// check if key exists.
+func Contains(locale string, key string) bool {
+	language, region := parseLocale(locale)
+	messageConfig, knownLanguage := messages[language]
+	if !knownLanguage {
+		return false
+	}
+	_, err := messageConfig.String(region, key)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func UpdateMsg(locale, key, value string) {
+	_, region := parseLocale(locale)
+	c := config.NewDefault()
+	b := c.AddOption(region, key, value)
+	if !b {
+		logger.Warnf("Put Msg faild. Key: %s Value: %s", key, value)
+	}
+	//
+	PutConfig(locale, c)
+}
+
+// PutMsg
+func PutMsg(locale, key, value string) {
+	if Contains(locale, key) {
+		logger.Debugf("Key Exists, skip put. Key: %s, Locale: %s", key, locale)
+		return
+	}
+	UpdateMsg(locale, key, value)
+}
+
+func PutConfig(locale string, c *config.Config) {
+	lang, _ := parseLocale(locale)
+	if _, exists := messages[lang]; exists {
+		messages[lang].Merge(c)
+	} else {
+		messages[lang] = c
+	}
+}
+
+func PutMsgText(locale, text string) {
+	c, err := wrobfig.ReadConfigFromString(text)
+	if err != nil {
+		logger.Warn("put msg text error: ", err)
+	}
+	PutConfig(locale, c)
+}
+
+func SetDefaultLanguage(v string) {
+	defaultLanguage = v
+}
+
+// Return all currently loaded message languages.
+func MessageLanguages() []string {
+	languages := make([]string, len(messages))
+	i := 0
+	for language, _ := range messages {
+		languages[i] = language
+		i++
+	}
+	return languages
+}
+
+// Perform a message look-up for the given locale and message using the given arguments.
+// When either an unknown locale or message is detected, a specially formatted string is returned.
+func Message(locale, message string, args ...interface{}) string {
+	language, region := parseLocale(locale)
+
+	messageConfig, knownLanguage := messages[language]
+	if !knownLanguage {
+		logger.Warnf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
+		messageConfig, knownLanguage = messages[defaultLanguage]
+		if !knownLanguage {
+			logger.Warnf("Unsupported default language for locale '%s' and message '%s'", defaultLanguage, message)
+			return fmt.Sprintf(unknownValueFormat, message)
+		}
+	}
+
+	// This works because unlike the mconfig documentation suggests it will actually
+	// try to resolve message in DEFAULT if it did not find it in the given section.
+	if value, err := messageConfig.String(region, message); err == nil {
+		return doMsgArgs(value, args...)
+	}
+	// try default region
+	if value, err := messageConfig.String("", message); err == nil {
+		return doMsgArgs(value, args...)
+	}
+	// cannot find
+	logger.Warnf("Cannot found message. Locale:%s, Key:%s", locale, message)
+	return mcore.ToLabel(message)
+}
+
+func doMsgArgs(value string, args ...interface{}) string {
+	if len(args) > 0 {
+		logger.Warnf("Arguments detected, formatting '%s' with %v", value, args)
+		value = fmt.Sprintf(value, args...)
+	}
+	return value
+}
+
+func parseLocale(locale string) (language, region string) {
+	if strings.Contains(locale, "-") {
+		languageAndRegion := strings.Split(locale, "-")
+		return languageAndRegion[0], languageAndRegion[1]
+	}
+	return locale, ""
+}
+
+func LoadDefaultMessages() {
+	LoadMessages("messages")
+}
+
+// Recursively read and cache all available messages from all message files on the given path.
+func LoadMessages(path string) {
+	if error := filepath.Walk(path, LoadMessageFile); error != nil && !os.IsNotExist(error) {
+		logger.Warn("Reading messages files error:", error)
+	}
+}
+
+// LoadPrefixMessages know path and prefix, not all dir files.
+func LoadPrefixMessages(path string, prefix string) {
+	// not found dir
+	var fs []os.FileInfo
+	var err error
+	fs, err = ioutil.ReadDir(path)
+	// path not found
+	if logger.CheckError(err) {
+		return
+	}
+	for _, f := range fs {
+		// skip sub dir
+		if f.IsDir() {
+			continue
+		}
+		// load messages
+		if strings.HasPrefix(f.Name(), prefix) {
+			fpath := fmt.Sprintf("%s/%s", path, f.Name())
+			LoadMessageFile(fpath, f, nil)
+		}
+	}
+}
+
+func FprintMessages(locale string, w io.Writer) {
+	if locale == "" {
+		logger.Warn("Locale should not be blank")
+		return
+	}
+	language, _ := parseLocale(locale)
+	if c, ok := messages[language]; ok {
+		for _, s := range c.Sections() {
+			fmt.Fprintf(w, "[%s]\n", s)
+			opts, _ := c.Options(s)
+			for _, opt := range opts {
+				optValue, _ := c.RawString(s, opt)
+				fmt.Fprintf(w, "%s: %s\n", opt, optValue)
+			}
+		}
+	}
+
+	logger.Warnf("Not found messages for locale: %s", locale)
+}
+
+// SaveMessageFile
+func SaveMessageFile(path string, prefix string) {
+	for locale, c := range messages {
+		if !strings.HasSuffix(path, "/") {
+			path = path + "/"
+		}
+		fn := fmt.Sprintf("%s%s.%s", path, prefix, locale)
+		err := c.WriteFile(fn, 0666, "")
+		logger.CheckError(err)
+	}
+}
+
+// Load a single message file
+func LoadMessageFile(path string, info os.FileInfo, osError error) error {
+	if osError != nil {
+		return osError
+	}
+	if info.IsDir() {
+		return nil
+	}
+	if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
+		if config, err := parseMessagesFile(path); err != nil {
+			logger.Error("Error parse Message file:", path, "Error:", err)
+			return err
+		} else {
+			locale := parseLocaleFromFileName(info.Name())
+			PutConfig(locale, config)
+			logger.Info("Successfully loaded messages from file: ", path)
+		}
+	} else {
+		logger.Infof("Ignoring file %s because it did not have a valid extension", path)
+	}
+	return nil
+}
+
+func parseMessagesFile(path string) (messageConfig *config.Config, error error) {
+	messageConfig, error = config.ReadDefault(path)
+	return
+}
+
+func parseLocaleFromFileName(file string) string {
+	extension := filepath.Ext(file)[1:]
+	return strings.ToLower(extension)
+}
