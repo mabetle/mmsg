@@ -2,7 +2,7 @@ package mmsg
 
 import (
 	"testing"
-	. "github.com/github.com/mabetle/mcore/mtest"
+	. "github.com/mabetle/mcore/mtest"
 )
 
 func TestPutMsg(t *testing.T) {
