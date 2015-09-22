@@ -53,13 +53,20 @@ func GetTableColumnLabel(locale, table, column string) string {
 	key := fmt.Sprintf("%s-%s-label", table, column)
 
 	if Contains(locale, key) {
-		logger.Debugf("Found model field label. Model:%s, Field:%s Key: %s", table, column, key)
+		logger.Tracef("Found table field label. Table:%s, Column:%s Key: %s", table, column, key)
 		value = Message(locale, key)
+	}
+
+	// not found in table label, try common
+	keyComm := fmt.Sprintf("%s-label", column)
+	
+	if value == "" && Contains(locale, keyComm) {
+		value = Message(locale, keyComm)
 	}
 
 	// if not found, name to label name.
 	if value == "" {
-		logger.Warnf("Not found model field label. Model:%s, Field:%s", table, column)
+		logger.Warnf("Not found table field label. Table:%s, Column:%s", table, column)
 		value = mcore.ToLabel(column)
 	}
 

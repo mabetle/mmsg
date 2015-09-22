@@ -136,6 +136,8 @@ func parseLocale(locale string) (language, region string) {
 	return locale, ""
 }
 
+// LoadDefaultMessages
+// Default work dir messages
 func LoadDefaultMessages() {
 	LoadMessages("messages")
 }
@@ -210,20 +212,31 @@ func LoadMessageFile(path string, info os.FileInfo, osError error) error {
 	if info.IsDir() {
 		return nil
 	}
-	if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
-		if config, err := parseMessagesFile(path); err != nil {
-			logger.Error("Error parse Message file:", path, "Error:", err)
-			return err
-		} else {
-			locale := parseLocaleFromFileName(info.Name())
-			PutConfig(locale, config)
-			logger.Info("Successfully loaded messages from file: ", path)
-		}
+	//if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
+	if config, err := parseMessagesFile(path); err != nil {
+		logger.Error("Error parse Message file:", path, "Error:", err)
+		return err
 	} else {
-		logger.Infof("Ignoring file %s because it did not have a valid extension", path)
+		locale := parseLocaleFromFileName(info.Name())
+		PutConfig(locale, config)
+		logger.Debug("Successfully loaded messages from file: ", path)
+	}
+	//} else {
+	//logger.Warnf("Ignoring file %s because it did not have a valid extension", path)
+	//}
+	return nil
+}
+
+// LoadMatchMessageFile
+func LoadMatchMessageFile(path string, info os.FileInfo, osError error) error {
+	if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
+		return LoadMessageFile(path, info, osError)
+	} else {
+		logger.Warnf("Ignoring file %s because it did not have a valid extension", path)
 	}
 	return nil
 }
+
 
 func parseMessagesFile(path string) (messageConfig *config.Config, error error) {
 	messageConfig, error = config.ReadDefault(path)
