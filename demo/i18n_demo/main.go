@@ -18,7 +18,7 @@ func DemoShow() {
 }
 
 func DemoLoadPrefixMessage() {
-	path := "/rundata/"
+	path := "/rundata"
 	prefix := "msg"
 	mmsg.LoadPrefixMessages(path, prefix)
 	DemoShow()

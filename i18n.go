@@ -39,6 +39,24 @@ func Contains(locale string, key string) bool {
 	return true
 }
 
+// return value and if contain
+func MessageContains(locale string, key string, args ...interface{}) (string, bool) {
+	language, region := parseLocale(locale)
+	messageConfig, knownLanguage := messages[language]
+
+	keyLabel := mcore.ToLabel(key)
+
+	if !knownLanguage {
+		return keyLabel, false
+	}
+	// check message.
+	if v, err := messageConfig.String(region, key); err != nil {
+		return keyLabel, false
+	} else {
+		return v, true
+	}
+}
+
 func UpdateMsg(locale, key, value string) {
 	_, region := parseLocale(locale)
 	c := config.NewDefault()
@@ -167,7 +185,9 @@ func LoadPrefixMessages(path string, prefix string) {
 		// load messages
 		if strings.HasPrefix(f.Name(), prefix) {
 			fpath := fmt.Sprintf("%s/%s", path, f.Name())
-			LoadMessageFile(fpath, f, nil)
+			if err := LoadMessageFile(fpath, f, nil); err != nil {
+				logger.Warnf("Load messages file error, path: %s, file name: %s", fpath, f.Name())
+			}
 		}
 	}
 }
@@ -236,7 +256,6 @@ func LoadMatchMessageFile(path string, info os.FileInfo, osError error) error {
 	}
 	return nil
 }
-
 
 func parseMessagesFile(path string) (messageConfig *config.Config, error error) {
 	messageConfig, error = config.ReadDefault(path)
