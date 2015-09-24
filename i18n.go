@@ -71,7 +71,7 @@ func UpdateMsg(locale, key, value string) {
 // PutMsg
 func PutMsg(locale, key, value string) {
 	if Contains(locale, key) {
-		logger.Debugf("Key Exists, skip put. Key: %s, Locale: %s", key, locale)
+		logger.Tracef("Key Exists, skip put. Key: %s, Locale: %s", key, locale)
 		return
 	}
 	UpdateMsg(locale, key, value)
@@ -239,7 +239,7 @@ func LoadMessageFile(path string, info os.FileInfo, osError error) error {
 	} else {
 		locale := parseLocaleFromFileName(info.Name())
 		PutConfig(locale, config)
-		logger.Debug("Successfully loaded messages from file: ", path)
+		logger.Trace("Successfully loaded messages from file: ", path)
 	}
 	//} else {
 	//logger.Warnf("Ignoring file %s because it did not have a valid extension", path)
