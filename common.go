@@ -2,8 +2,18 @@ package mmsg
 
 import (
 	"github.com/mabetle/mlog"
+	"github.com/robfig/config"
+)
+
+const (
+	messageFilePattern = `^\w+\.[a-zA-Z]{2}$`
+	unknownValueFormat = "[%s]"
 )
 
 var (
-	logger = mlog.GetLogger("github.com/mabetle/mmsg")
+	logger          = mlog.GetLogger("github.com/mabetle/mmsg")
+	defaultLanguage = "en"
+	DEFAULT_LOCALE  = "en-US"
+	// All currently loaded message configs.
+	messages map[string]*config.Config = make(map[string]*config.Config)
 )

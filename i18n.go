@@ -14,17 +14,6 @@ import (
 	"strings"
 )
 
-const (
-	messageFilePattern = `^\w+\.[a-zA-Z]{2}$`
-	unknownValueFormat = "[%s]"
-)
-
-var (
-	defaultLanguage = "en"
-	// All currently loaded message configs.
-	messages map[string]*config.Config = make(map[string]*config.Config)
-)
-
 // check if key exists.
 func Contains(locale string, key string) bool {
 	language, region := parseLocale(locale)
