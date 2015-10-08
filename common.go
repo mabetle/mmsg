@@ -11,7 +11,11 @@ const (
 )
 
 var (
-	logger          = mlog.GetLogger("github.com/mabetle/mmsg")
+	logger = mlog.GetLogger("github.com/mabetle/mmsg")
+
+	// default message directory
+	MessageFilesDirectory = "messages"
+
 	defaultLanguage = "en"
 	DEFAULT_LOCALE  = "en-US"
 	// All currently loaded message configs.
