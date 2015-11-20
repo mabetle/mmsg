@@ -17,7 +17,10 @@ var (
 	MessageFilesDirectory = "messages"
 
 	defaultLanguage = "en"
-	DEFAULT_LOCALE  = "en-US"
+
+	// DefaultLocale run time locale
+	DefaultLocale = "en-US"
+
 	// All currently loaded message configs.
 	messages map[string]*config.Config = make(map[string]*config.Config)
 )

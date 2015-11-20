@@ -10,7 +10,7 @@ func GetUserLocale(username string) string {
 	if locale, ok := userLocale[username]; ok {
 		return locale
 	}
-	return DEFAULT_LOCALE
+	return DefaultLocale
 }
 
 // UserMessage

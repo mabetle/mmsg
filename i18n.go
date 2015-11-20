@@ -63,6 +63,9 @@ func PutMsg(locale, key, value string) {
 		logger.Tracef("Key Exists, skip put. Key: %s, Locale: %s", key, locale)
 		return
 	}
+	if key == "" || locale == "" {
+		return
+	}
 	UpdateMsg(locale, key, value)
 }
 
@@ -96,6 +99,15 @@ func MessageLanguages() []string {
 		i++
 	}
 	return languages
+}
+
+func LocaleMessage(key string, args ...interface{}) string {
+	locale := GetLocale()
+	return Message(locale, key, args...)
+}
+
+func GetLocale() string {
+	return DefaultLocale
 }
 
 // Perform a message look-up for the given locale and message using the given arguments.
