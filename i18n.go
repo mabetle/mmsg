@@ -51,7 +51,7 @@ func UpdateMsg(locale, key, value string) {
 	c := config.NewDefault()
 	b := c.AddOption(region, key, value)
 	if !b {
-		logger.Warnf("Put Msg faild. Key: %s Value: %s", key, value)
+		logger.Infof("Put Msg faild. Key: %s Value: %s", key, value)
 	}
 	//
 	PutConfig(locale, c)
@@ -135,13 +135,13 @@ func Message(locale, message string, args ...interface{}) string {
 		return doMsgArgs(value, args...)
 	}
 	// cannot find
-	logger.Warnf("Cannot found message. Locale:%s, Key:%s", locale, message)
+	logger.Debugf("Cannot found message. Locale:%s, Key:%s", locale, message)
 	return mcore.ToLabel(message)
 }
 
 func doMsgArgs(value string, args ...interface{}) string {
 	if len(args) > 0 {
-		logger.Warnf("Arguments detected, formatting '%s' with %v", value, args)
+		logger.Infof("Arguments detected, formatting '%s' with %v", value, args)
 		value = fmt.Sprintf(value, args...)
 	}
 	return value
@@ -210,7 +210,7 @@ func FprintMessages(locale string, w io.Writer) {
 		}
 	}
 
-	logger.Warnf("Not found messages for locale: %s", locale)
+	logger.Infof("Not found messages for locale: %s", locale)
 }
 
 // SaveMessageFile
